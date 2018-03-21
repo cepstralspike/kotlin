@@ -30,10 +30,16 @@ import java.util.List;
 public class ForTestCompileRuntime {
     private static volatile SoftReference<ClassLoader> reflectJarClassLoader = new SoftReference<>(null);
     private static volatile SoftReference<ClassLoader> runtimeJarClassLoader = new SoftReference<>(null);
+    private static volatile SoftReference<ClassLoader> coroutinesJarClassLoader = new SoftReference<>(null);
 
     @NotNull
     public static File runtimeJarForTests() {
         return assertExists(new File("dist/kotlinc/lib/kotlin-stdlib.jar"));
+    }
+
+    @NotNull
+    public static File coroutinesJarForTests() {
+        return assertExists(new File("dist/kotlin-stdlib-coroutines.jar"));
     }
 
     @NotNull
@@ -93,8 +99,19 @@ public class ForTestCompileRuntime {
     public static synchronized ClassLoader runtimeAndReflectJarClassLoader() {
         ClassLoader loader = reflectJarClassLoader.get();
         if (loader == null) {
-            loader = createClassLoader(runtimeJarForTests(), reflectJarForTests(), scriptRuntimeJarForTests(), kotlinTestJarForTests());
+            loader = createClassLoader(runtimeJarForTests(), coroutinesJarForTests(), reflectJarForTests(), scriptRuntimeJarForTests(),
+                                       kotlinTestJarForTests());
             reflectJarClassLoader = new SoftReference<>(loader);
+        }
+        return loader;
+    }
+
+    @NotNull
+    public static synchronized ClassLoader runtimeAndCoroutinesJarClassLoader() {
+        ClassLoader loader = coroutinesJarClassLoader.get();
+        if (loader == null) {
+            loader = createClassLoader(runtimeJarForTests(), coroutinesJarForTests(), scriptRuntimeJarForTests(), kotlinTestJarForTests());
+            coroutinesJarClassLoader = new SoftReference<>(loader);
         }
         return loader;
     }

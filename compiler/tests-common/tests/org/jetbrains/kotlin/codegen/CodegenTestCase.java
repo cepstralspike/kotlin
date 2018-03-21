@@ -99,6 +99,7 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
     protected GeneratedClassLoader initializedClassLoader;
     protected File javaClassesOutputDirectory = null;
     protected List<File> additionalDependencies = null;
+    protected String coroutinesPackage;
 
     protected ConfigurationKind configurationKind = ConfigurationKind.JDK_ONLY;
     private final String defaultJvmTarget = System.getProperty(DEFAULT_JVM_TARGET_FOR_TEST);
@@ -109,7 +110,7 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
             @NotNull ConfigurationKind configurationKind,
             @Nullable File... javaSourceRoots
     ) {
-        createEnvironmentWithMockJdkAndIdeaAnnotations(configurationKind, Collections.emptyList(), javaSourceRoots);
+        createEnvironmentWithMockJdkAndIdeaAnnotations(configurationKind, Collections.emptyList(), "" , javaSourceRoots);
     }
 
     @NotNull
@@ -125,6 +126,7 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
     protected final void createEnvironmentWithMockJdkAndIdeaAnnotations(
             @NotNull ConfigurationKind configurationKind,
             @NotNull List<TestFile> testFilesWithConfigurationDirectives,
+            @NotNull String coroutinesPackage,
             @Nullable File... javaSourceRoots
     ) {
         if (myEnvironment != null) {
@@ -154,7 +156,7 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
     ) {
         CompilerConfiguration configuration = KotlinTestUtils.newConfiguration(kind, jdkKind, classpath, javaSource);
 
-        updateConfigurationByDirectivesInTestFiles(testFilesWithConfigurationDirectives, configuration);
+        updateConfigurationByDirectivesInTestFiles(testFilesWithConfigurationDirectives, configuration, coroutinesPackage);
         updateConfiguration(configuration);
         setCustomDefaultJvmTarget(configuration);
 
@@ -163,7 +165,8 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
 
     protected static void updateConfigurationByDirectivesInTestFiles(
             @NotNull List<TestFile> testFilesWithConfigurationDirectives,
-            @NotNull CompilerConfiguration configuration
+            @NotNull CompilerConfiguration configuration,
+            @NotNull String coroutinesPackage
     ) {
         LanguageVersionSettings explicitLanguageVersionSettings = null;
         LanguageVersion explicitLanguageVersion = null;
@@ -184,6 +187,16 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
             if (version != null) {
                 assertDirectivesToNull(explicitLanguageVersionSettings, explicitLanguageVersion);
                 explicitLanguageVersion = LanguageVersion.fromVersionString(version);
+            }
+            if (!InTextDirectivesUtils.findLinesWithPrefixesRemoved(testFile.content, "// COMMON_COROUTINES_TEST").isEmpty()) {
+                assert(!testFile.content.contains("COROUTINES_PACKAGE")) : "Must replace COROUTINES_PACKAGE prior to tests compilation";
+                if (!coroutinesPackage.isEmpty()) {
+                    if (coroutinesPackage.equals("kotlin.coroutines.experimental")) {
+                        explicitLanguageVersion = LanguageVersion.KOTLIN_1_2;
+                    } else {
+                        explicitLanguageVersion = LanguageVersion.KOTLIN_1_3;
+                    }
+                }
             }
 
             Map<String, String> directives = KotlinTestUtils.parseDirectives(testFile.content);
@@ -292,6 +305,12 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
     }
 
     @Override
+    protected void setUp() throws Exception {
+        coroutinesPackage = "";
+        super.setUp();
+    }
+
+    @Override
     protected void tearDown() throws Exception {
         myFiles = null;
         myEnvironment = null;
@@ -388,8 +407,11 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
     protected GeneratedClassLoader createClassLoader() {
         return new GeneratedClassLoader(
                 generateClassesInFile(),
-                configurationKind.getWithReflection() ? ForTestCompileRuntime.runtimeAndReflectJarClassLoader()
-                                                      : ForTestCompileRuntime.runtimeJarClassLoader(),
+                configurationKind.getWithReflection()
+                ? ForTestCompileRuntime.runtimeAndReflectJarClassLoader()
+                : configurationKind.getWithCoroutines()
+                  ? ForTestCompileRuntime.runtimeAndCoroutinesJarClassLoader()
+                  : ForTestCompileRuntime.runtimeJarClassLoader(),
                 getClassPathURLs()
         );
     }
@@ -641,6 +663,9 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
             if (loadAndroidAnnotations) {
                 javaClasspath.add(ForTestCompileRuntime.androidAnnotationsForTests().getPath());
             }
+            if (configurationKind.getWithCoroutines()) {
+                javaClasspath.add(ForTestCompileRuntime.coroutinesJarForTests().getPath());
+            }
 
             javaClassesOutputDirectory = CodegenTestUtil.compileJava(
                     findJavaSourcesInDirectory(javaSourceDir), javaClasspath, javacOptions
@@ -652,7 +677,11 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
     protected ConfigurationKind extractConfigurationKind(@NotNull List<TestFile> files) {
         boolean addRuntime = false;
         boolean addReflect = false;
+        boolean addCoroutines = false;
         for (TestFile file : files) {
+            if (InTextDirectivesUtils.isDirectiveDefined(file.content, "COMMON_COROUTINES_TEST")) {
+                addCoroutines = true;
+            }
             if (InTextDirectivesUtils.isDirectiveDefined(file.content, "WITH_RUNTIME")) {
                 addRuntime = true;
             }
@@ -662,6 +691,7 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
         }
 
         return addReflect ? ConfigurationKind.ALL :
+               addCoroutines ? ConfigurationKind.WITH_COROUTINES :
                addRuntime ? ConfigurationKind.NO_KOTLIN_REFLECT :
                ConfigurationKind.JDK_ONLY;
     }
@@ -720,13 +750,25 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
         String expectedText = KotlinTestUtils.doLoadFile(file);
         Ref<File> javaFilesDir = Ref.create();
 
-        List<TestFile> testFiles = createTestFiles(file, expectedText, javaFilesDir);
+        List<TestFile> testFiles = createTestFiles(file, expectedText, javaFilesDir, "");
+
+        doMultiFileTest(file, testFiles, javaFilesDir.get());
+    }
+
+    protected void doTestWithCoroutinesPackageReplacement(String filePath, String packageName) throws Exception {
+        File file = new File(filePath);
+        String expectedText = KotlinTestUtils.doLoadFile(file);
+        expectedText = expectedText.replace("COROUTINES_PACKAGE", packageName);
+        this.coroutinesPackage = packageName;
+        Ref<File> javaFilesDir = Ref.create();
+
+        List<TestFile> testFiles = createTestFiles(file, expectedText, javaFilesDir, coroutinesPackage);
 
         doMultiFileTest(file, testFiles, javaFilesDir.get());
     }
 
     @NotNull
-    private static List<TestFile> createTestFiles(File file, String expectedText, Ref<File> javaFilesDir) {
+    private static List<TestFile> createTestFiles(File file, String expectedText, Ref<File> javaFilesDir, String coroutinesPackage) {
         return KotlinTestUtils.createTestFiles(file.getName(), expectedText, new KotlinTestUtils.TestFileFactoryNoModules<TestFile>() {
             @NotNull
             @Override
@@ -751,10 +793,14 @@ public abstract class CodegenTestCase extends KtUsefulTestCase {
                 KotlinTestUtils.mkdirs(file.getParentFile());
                 FilesKt.writeText(file, content, Charsets.UTF_8);
             }
-        });
+        }, coroutinesPackage);
     }
 
-    protected void doMultiFileTest(@NotNull File wholeFile, @NotNull List<TestFile> files, @Nullable File javaFilesDir) throws Exception {
+    protected void doMultiFileTest(
+        @NotNull File wholeFile,
+        @NotNull List<TestFile> files,
+        @Nullable File javaFilesDir
+    ) throws Exception {
         throw new UnsupportedOperationException("Multi-file test cases are not supported in this test");
     }
 

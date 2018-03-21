@@ -31,7 +31,9 @@ abstract class AbstractDumpDeclarationsTest : CodegenTestCase() {
         dumpToFile = KotlinTestUtils.tmpDirForTest(this).resolve(name + ".json")
         compile(files, null)
         classFileFactory.generationState.destroy()
-        KotlinTestUtils.assertEqualsToFile(expectedResult, dumpToFile.readText())
+        KotlinTestUtils.assertEqualsToFile(expectedResult, dumpToFile.readText()) {
+            it.replace("COROUTINES_PACKAGE", coroutinesPackage)
+        }
     }
 
     override fun updateConfiguration(configuration: CompilerConfiguration) {

@@ -38,7 +38,11 @@ import static org.jetbrains.kotlin.test.clientserver.TestProcessServerKt.getGene
 public abstract class AbstractBlackBoxCodegenTest extends CodegenTestCase {
 
     @Override
-    protected void doMultiFileTest(@NotNull File wholeFile, @NotNull List<TestFile> files, @Nullable File javaFilesDir) throws Exception {
+    protected void doMultiFileTest(
+        @NotNull File wholeFile,
+        @NotNull List<TestFile> files,
+        @Nullable File javaFilesDir
+    ) throws Exception {
         try {
             compile(files, javaFilesDir);
             blackBox();
@@ -87,7 +91,7 @@ public abstract class AbstractBlackBoxCodegenTest extends CodegenTestCase {
                         }
                 );
 
-        assertEqualsToFile(expectedFile, text);
+        assertEqualsToFile(expectedFile, text, s -> s.replace("COROUTINES_PACKAGE", coroutinesPackage));
     }
 
     protected void blackBox() {

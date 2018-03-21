@@ -26,7 +26,9 @@ abstract class AbstractBytecodeListingTest : CodegenTestCase() {
         val txtFile = File(wholeFile.parentFile, wholeFile.nameWithoutExtension + ".txt")
         compile(files, javaFilesDir)
         val actualTxt = BytecodeListingTextCollectingVisitor.getText(classFileFactory, withSignatures = isWithSignatures(wholeFile))
-        KotlinTestUtils.assertEqualsToFile(txtFile, actualTxt)
+        KotlinTestUtils.assertEqualsToFile(txtFile, actualTxt) {
+            it.replace("COROUTINES_PACKAGE", coroutinesPackage)
+        }
     }
 
     private fun isWithSignatures(wholeFile: File): Boolean =

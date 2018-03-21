@@ -1,8 +1,9 @@
 // WITH_RUNTIME
 // WITH_COROUTINES
+// COMMON_COROUTINES_TEST
 // IGNORE_BACKEND_WITHOUT_CHECK: JS
 import helpers.*
-import kotlin.coroutines.experimental.*
+import COROUTINES_PACKAGE.*
 
 tailrec suspend fun String.repeat(num : Int, acc : StringBuilder = StringBuilder()) : String =
         if (num == 0) acc.toString()

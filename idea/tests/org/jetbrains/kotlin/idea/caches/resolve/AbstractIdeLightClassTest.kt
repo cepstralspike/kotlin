@@ -124,10 +124,11 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
 
 private fun testLightClass(expected: File, testData: File, normalize: (String) -> String, findLightClass: (String) -> PsiClass?) {
     LightClassTestCommon.testLightClass(
-            expected,
-            testData,
-            findLightClass,
-            normalizeText = { text ->
+        expected,
+        testData,
+        coroutinesPackage = "",
+        findLightClass = findLightClass,
+        normalizeText = { text ->
                 //NOTE: ide and compiler differ in names generated for parameters with unspecified names
                 text
                         .replace("java.lang.String s,", "java.lang.String p,")

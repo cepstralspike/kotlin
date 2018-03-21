@@ -41,6 +41,7 @@ import java.util.*;
 public abstract class KotlinMultiFileTestWithJava<M, F> extends KtUsefulTestCase {
     protected File javaFilesDir;
     private File kotlinSourceRoot;
+    protected String coroutinesPackage;
 
     @Override
     public void setUp() throws Exception {
@@ -50,6 +51,7 @@ public abstract class KotlinMultiFileTestWithJava<M, F> extends KtUsefulTestCase
         if (isKotlinSourceRootNeeded()) {
             kotlinSourceRoot = KotlinTestUtils.tmpDir("kotlin-src");
         }
+        coroutinesPackage = "";
     }
 
     @Override
@@ -147,6 +149,17 @@ public abstract class KotlinMultiFileTestWithJava<M, F> extends KtUsefulTestCase
         doMultiFileTest(file, modules, testFiles);
     }
 
+    protected void doTestWithCoroutinesPackageReplacement(String filePath, String coroutinesPackage) throws Exception {
+        File file = new File(filePath);
+        String expectedText = KotlinTestUtils.doLoadFile(file);
+        expectedText = expectedText.replace("COROUTINES_PACKAGE", coroutinesPackage);
+        this.coroutinesPackage = coroutinesPackage;
+        Map<String, ModuleAndDependencies> modules = new HashMap<>();
+        List<F> testFiles = createTestFiles(file, expectedText, modules);
+
+        doMultiFileTest(file, modules, testFiles);
+    }
+
     protected abstract M createTestModule(@NotNull String name);
 
     protected abstract F createTestFile(M module, String fileName, String text, Map<String, String> directives);
@@ -187,7 +200,7 @@ public abstract class KotlinMultiFileTestWithJava<M, F> extends KtUsefulTestCase
                 KotlinTestUtils.mkdirs(file.getParentFile());
                 FilesKt.writeText(file, content, Charsets.UTF_8);
             }
-        });
+        }, coroutinesPackage);
     }
 
 }
