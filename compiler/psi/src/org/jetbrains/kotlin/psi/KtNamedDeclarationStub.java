@@ -146,9 +146,7 @@ abstract class KtNamedDeclarationStub<T extends KotlinStubWithFqName<?>> extends
                     containingClass = companionObjectClass;
                 }
             }
-            if (containingClass != null) {
-                return new LocalSearchScope(containingClass);
-            }
+            return new LocalSearchScope(containingClass != null ? containingClass : getContainingFile());
         }
 
         SearchScope scope = super.getUseScope();
