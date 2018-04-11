@@ -5,9 +5,9 @@ r [jvm]
 // common module
 
 c [common]
-p1 [jvm]
-p2 [jvm]
+pJvm [jvm]
+pJs [js]
 
-p1 -> r [compile]
-p1 -> c [expectedBy]
-p2 -> c [expectedBy]
+pJvm -> r [compile]
+pJvm -> c [expectedBy]
+pJs -> c [expectedBy]

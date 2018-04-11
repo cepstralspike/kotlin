@@ -42,19 +42,22 @@ import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.incremental.CacheVersion
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.testingUtils.*
 import org.jetbrains.kotlin.jps.build.dependeciestxt.DependenciesTxt
 import org.jetbrains.kotlin.jps.build.dependeciestxt.DependenciesTxtBuilder
-import org.jetbrains.kotlin.jps.build.dependeciestxt.DependenciesTxtStubGenerator
 import org.jetbrains.kotlin.jps.incremental.getKotlinCache
 import org.jetbrains.kotlin.jps.incremental.withLookupStorage
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.Printer
-import java.io.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.PrintStream
 import java.util.*
 import java.util.concurrent.Future
 import kotlin.reflect.jvm.javaField
@@ -375,7 +378,8 @@ abstract class AbstractIncrementalJpsTest(
             preProcessSources(sourceDestinationDir)
         }
 
-        JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(getAbsolutePath("out"))
+        val outputUrl = JpsPathUtil.pathToUrl(getAbsolutePath("out"))
+        JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = outputUrl
 
         val jdk = addJdk("my jdk")
         val dependenciesTxt = readModuleDependencies()
@@ -398,6 +402,11 @@ abstract class AbstractIncrementalJpsTest(
 
                 val kotlinFacetSettings = it.kotlinFacetSettings
                 if (kotlinFacetSettings != null) {
+                    val compilerArguments = kotlinFacetSettings.compilerArguments
+                    if (compilerArguments is K2MetadataCompilerArguments) {
+                        compilerArguments.destination = outputUrl
+                    }
+
                     module.container.setChild(
                         JpsKotlinFacetModuleExtension.KIND,
                         JpsKotlinFacetModuleExtension(kotlinFacetSettings)
@@ -415,8 +424,6 @@ abstract class AbstractIncrementalJpsTest(
                     it.exported
                 )
             }
-
-            DependenciesTxtStubGenerator(dependenciesTxt, testDataDir).generate()
 
             dependenciesTxt.modules.forEach {
                 prepareModuleSources(it.name)

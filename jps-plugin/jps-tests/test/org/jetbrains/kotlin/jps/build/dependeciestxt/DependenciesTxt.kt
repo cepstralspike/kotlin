@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.jps.build.dependeciestxt
 
-import com.sun.tools.classfile.Dependencies
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
@@ -25,7 +24,12 @@ import java.io.File
  * Dependencies description file.
  * See [README.md] for more details.
  */
-data class DependenciesTxt(val modules: List<Module>, val dependencies: List<Dependency>) {
+data class DependenciesTxt(
+    val fileName: String,
+    val modules: List<Module>, val dependencies: List<Dependency>
+) {
+    override fun toString() = fileName
+
     data class Module(val name: String) {
         /**
          * Facet should not be created for old tests
@@ -36,6 +40,18 @@ data class DependenciesTxt(val modules: List<Module>, val dependencies: List<Dep
 
         val dependencies = mutableListOf<Dependency>()
         val usages = mutableListOf<Dependency>()
+
+        val isCommonModule
+            get() = kotlinFacetSettings?.targetPlatformKind == TargetPlatformKind.Common
+
+        val isJvmModule
+            get() = kotlinFacetSettings?.targetPlatformKind is TargetPlatformKind.Jvm
+
+        val expectedBy
+            get() = dependencies.filter { it.expectedBy }
+
+        val generateEditingTests: Boolean
+            get() = false
     }
 
     data class Dependency(
@@ -86,7 +102,7 @@ class DependenciesTxtBuilder {
         fun build() = DependenciesTxt.Dependency(from.actual, to.actual, scope, expectedBy, exported)
     }
 
-    fun readFile(file: File): DependenciesTxt {
+    fun readFile(file: File, fileTitle: String = file.toString()): DependenciesTxt {
         val lexer = DependenciesTxtLexer(CharStreams.fromPath(file.toPath()))
         val parser = DependenciesTxtParser(CommonTokenStream(lexer))
 
@@ -103,6 +119,7 @@ class DependenciesTxtBuilder {
         // dependencies build is required for module.build() (module.dependencies will be filled)
         val dependencies = dependencies.map { it.build() }
         return DependenciesTxt(
+            fileTitle,
             modules.values.map { it.build() },
             dependencies
         )

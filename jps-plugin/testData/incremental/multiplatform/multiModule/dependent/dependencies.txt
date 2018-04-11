@@ -1,21 +1,21 @@
 // multiplatform module A
 
 ac [common]
-ap1 [jvm]
-ap2 [jvm]
+aJvm [jvm]
+aJs [js]
 
-ap1 -> ac [expectedBy]
-ap2 -> ac [expectedBy]
+apJvm -> ac [expectedBy]
+apJs -> ac [expectedBy]
 
 // multiplatform module B (depends on module A)
 
 bc [common]
-bp1 [jvm]
-bp2 [jvm]
+bpJvm [jvm]
+bpJs [js]
 
-bp1 -> bc [expectedBy]
-bp2 -> bc [expectedBy]
+bpJvm -> bc [expectedBy]
+bpJs -> bc [expectedBy]
 
 bc -> ac [compile]
-bp1 -> ap1 [compile]
-bp2 -> ap2 [compile]
+bpJvm -> apJvm [compile]
+bpJs -> apJs [compile]
