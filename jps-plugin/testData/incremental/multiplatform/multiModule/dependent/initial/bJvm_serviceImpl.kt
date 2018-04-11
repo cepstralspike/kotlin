@@ -3,11 +3,12 @@
 // from `incremental/multiplatform/multiModule/dependent/dependencies.txt`
 //
 
-actual fun bc_platformDependentBc(): String = "bpJs"
-fun bpJs_platformOnly() = "bpJs"
+actual fun bc_platformDependentBc(): String = "bJvm"
+fun bJvm_platformOnly() = "bJvm"
 
-fun bpJsTest() {
+fun bJvmTest() {
   bc_platformIndependentBc()
   bc_platformDependentBc()
-  bpJs_platformOnly()
+  bJvm_platformOnly()
+  JavaClass().doStuff()
 }

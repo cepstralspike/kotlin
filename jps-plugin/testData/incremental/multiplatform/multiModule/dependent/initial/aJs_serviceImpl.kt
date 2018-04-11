@@ -3,11 +3,11 @@
 // from `incremental/multiplatform/multiModule/dependent/dependencies.txt`
 //
 
-actual fun ac_platformDependentAc(): String = "apJvm"
-fun apJvm_platformOnly() = "apJvm"
+actual fun ac_platformDependentAc(): String = "aJs"
+fun aJs_platformOnly() = "aJs"
 
-fun apJvmTest() {
+fun aJsTest() {
   ac_platformIndependentAc()
   ac_platformDependentAc()
-  apJvm_platformOnly()
+  aJs_platformOnly()
 }

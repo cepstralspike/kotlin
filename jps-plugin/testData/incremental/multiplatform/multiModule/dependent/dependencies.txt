@@ -4,18 +4,18 @@ ac [common]
 aJvm [jvm]
 aJs [js]
 
-apJvm -> ac [expectedBy]
-apJs -> ac [expectedBy]
+aJvm -> ac [expectedBy]
+aJs -> ac [expectedBy]
 
 // multiplatform module B (depends on module A)
 
 bc [common]
-bpJvm [jvm]
-bpJs [js]
+bJvm [jvm]
+bJs [js]
 
-bpJvm -> bc [expectedBy]
-bpJs -> bc [expectedBy]
+bJvm -> bc [expectedBy]
+bJs -> bc [expectedBy]
 
 bc -> ac [compile]
-bpJvm -> apJvm [compile]
-bpJs -> apJs [compile]
+bJvm -> aJvm [compile]
+bJs -> aJs [compile]

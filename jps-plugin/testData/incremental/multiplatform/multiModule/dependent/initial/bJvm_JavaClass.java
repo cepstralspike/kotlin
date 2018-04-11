@@ -1,5 +1,5 @@
 public class JavaClass {
     public String doStuff() {
-       return "bpJvm";
+       return "bJvm";
     }
 }
