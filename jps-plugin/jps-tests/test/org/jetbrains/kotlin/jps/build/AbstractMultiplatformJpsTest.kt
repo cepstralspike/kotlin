@@ -11,4 +11,7 @@ abstract class AbstractMultiplatformJpsTest :
         allowNoBuildLogFileInTestData = true
     ) {
 
+    override fun doTest(testDataPath: String) {
+        doInitialMakeTest(testDataPath)
+    }
 }

@@ -176,7 +176,7 @@ abstract class AbstractIncrementalJpsTest(
         }
     }
 
-    private fun initialMake(): MakeResult {
+    protected fun initialMake(): MakeResult {
         val makeResult = build()
 
         val initBuildLogFile = File(testDataDir, "init-build.log")
@@ -275,6 +275,21 @@ abstract class AbstractIncrementalJpsTest(
         clearCachesRebuildAndCheckOutput(lastMakeResult)
     }
 
+    protected open fun doInitialMakeTest(testDataPath: String) {
+        testDataDir = File(testDataPath)
+        workDir = FileUtilRt.createTempDirectory(TEMP_DIRECTORY_TO_USE, "jps-build", null)
+        Disposer.register(testRootDisposable, Disposable { FileUtilRt.delete(workDir) })
+
+        configureModules()
+        val results = initialMake()
+
+        val buildLogFile = buildLogFinder.findBuildLog(testDataDir)
+
+        if (buildLogFile != null && buildLogFile.exists()) {
+            UsefulTestCase.assertSameLinesWithFile(buildLogFile.absolutePath, results.log)
+        } else throw IllegalStateException("No build log file in $testDataDir")
+    }
+
     private fun createMappingsDump(project: ProjectDescriptor) =
             createKotlinIncrementalCacheDump(project) + "\n\n\n" +
             createLookupCacheDump(project) + "\n\n\n" +
@@ -368,7 +383,7 @@ abstract class AbstractIncrementalJpsTest(
     }
 
     // null means one module
-    private fun configureModules(): Set<String>? {
+    protected fun configureModules(): Set<String>? {
         fun prepareModuleSources(moduleName: String?) {
             val sourceDirName = moduleName?.let { "$it/src" } ?: "src"
             val filePrefix = moduleName?.let { "${it}_" } ?: ""
