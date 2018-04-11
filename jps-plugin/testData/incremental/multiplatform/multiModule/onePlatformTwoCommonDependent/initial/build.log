@@ -9,7 +9,7 @@ Exit code: OK
 ------------------------------------------
 Building pJvm
 Compiling files:
-  c2/src/servicec2Header.kt
+  c2/src/serviceC2Header.kt
   pJvm/src/serviceImpl.kt
 End of files
 Exit code: OK
@@ -22,7 +22,7 @@ Cleaning output files:
   out/production/pJvm/ServiceImplKt.class
 End of files
 Compiling files:
-  c2/src/servicec2Header.kt
+  c2/src/serviceC2Header.kt
   pJvm/src/serviceImpl.kt
 End of files
 Exit code: OK

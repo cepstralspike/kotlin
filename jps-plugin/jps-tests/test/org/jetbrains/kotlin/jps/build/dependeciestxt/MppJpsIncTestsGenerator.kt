@@ -236,7 +236,8 @@ class MppJpsIncTestsGenerator(val txtFile: File, val txt: DependenciesTxt, val r
             serviceName: String = "",
             fileNameSuffix: String = ""
         ) {
-            serviceKtFile(module, module.name + serviceName, fileNameSuffix).setFileContent(buildString {
+            val uniqServiceName = module.name.capitalizeFirstLetter() + serviceName
+            serviceKtFile(module, uniqServiceName, fileNameSuffix).setFileContent(buildString {
                 appendln(generatedByComment)
 
                 if (platformDependent)

@@ -3,7 +3,7 @@ Exit code: OK
 ------------------------------------------
 Building pJvmMain
 Compiling files:
-  cMain/src/servicecMainHeader.kt
+  cMain/src/serviceCMainHeader.kt
   pJvmMain/src/serviceImpl.kt
 End of files
 Exit code: OK
@@ -16,7 +16,7 @@ Cleaning output files:
   out/production/pJvmMain/ServiceImplKt.class
 End of files
 Compiling files:
-  cMain/src/servicecMainHeader.kt
+  cMain/src/serviceCMainHeader.kt
   pJvmMain/src/serviceImpl.kt
 End of files
 Exit code: OK
@@ -29,7 +29,7 @@ Exit code: OK
 ------------------------------------------
 Building pJvmTests
 Compiling files:
-  cTests/src/servicecTestsHeader.kt
+  cTests/src/serviceCTestsHeader.kt
   pJvmTests/src/serviceImpl.kt
 End of files
 Exit code: OK
@@ -42,7 +42,7 @@ Cleaning output files:
   out/production/pJvmTests/ServiceImplKt.class
 End of files
 Compiling files:
-  cTests/src/servicecTestsHeader.kt
+  cTests/src/serviceCTestsHeader.kt
   pJvmTests/src/serviceImpl.kt
 End of files
 Exit code: OK
